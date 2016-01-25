@@ -8,7 +8,7 @@ import hashlib
 import os
 import serial
 from .utils import default_port
-from .luacode import SAVE_LUA, LIST_FILES, UART_SETUP
+from .luacode import DOWNLOAD_FILE, SAVE_LUA, LUA_FUNCTIONS, LIST_FILES, UART_SETUP
 
 log = logging.getLogger(__name__)
 
@@ -103,6 +103,14 @@ class Uploader(object):
         """
         log.info('Preparing esp for transfer.')
 
+        for fn in LUA_FUNCTIONS:
+            d = self.exchange('print({0})'.format(fn))
+            if d.find('function:') == -1:
+                break
+        else:
+            log.debug('Found all required lua functions, no need to upload them')
+            return
+
         data = SAVE_LUA.format(baud=self._port.baudrate)
         ##change any \r\n to just \n and split on that
         lines = data.replace('\r', '').split('\n')
@@ -119,6 +127,8 @@ class Uploader(object):
             if 'unexpected' in d or len(d) > len(SAVE_LUA)+10:
                 log.error('error in save_lua "%s"', d)
                 return
+
+        log.info('Prepared in {0:.4}s'.format(time.time() - begin))
 
     def download_file(self, filename):
         chunk_size = 256
