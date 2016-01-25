@@ -7,6 +7,7 @@ import logging
 import hashlib
 import os
 import serial
+import progressbar
 from .utils import default_port
 from .luacode import DOWNLOAD_FILE, SAVE_LUA, LUA_FUNCTIONS, LIST_FILES, UART_SETUP
 
@@ -128,8 +129,6 @@ class Uploader(object):
                 log.error('error in save_lua "%s"', d)
                 return
 
-        log.info('Prepared in {0:.4}s'.format(time.time() - begin))
-
     def download_file(self, filename):
         chunk_size = 256
         bytes_read = 0
@@ -176,6 +175,7 @@ class Uploader(object):
         log.debug('sending %d bytes in %s', len(content), filename)
         pos = 0
         chunk_size = 128
+        pbar = progressbar.ProgressBar(widgets=[progressbar.Percentage(), progressbar.Bar()], maxval=len(content), term_width=36).start()
         while pos < len(content):
             rest = len(content) - pos
             if rest > chunk_size:
@@ -188,6 +188,8 @@ class Uploader(object):
                 return
 
             pos += chunk_size
+            pbar.update(min(pos, len(content)))
+        log.info('') #because progressbar needs a newline after its done
 
         log.debug('sending zero block')
         #zero size block
