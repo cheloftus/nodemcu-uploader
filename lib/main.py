@@ -232,8 +232,8 @@ def main_func():
     uploader.close()
 
     if args.operation == 'terminal':
+        print('terminal')
         #uploader can not claim the port
-        uploader.close()
         terminal(args.port)
 
 
